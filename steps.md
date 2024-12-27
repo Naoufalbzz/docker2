@@ -15,4 +15,10 @@ in folder met Dockerfile
 
 
 
-`python3 script.py -dn testdb -du root -t PSQL -b -bd /home/user1/`
+`python3 backup_script.py -dn testdb -du root -t PSQL -b -bd /src/backups`
+
+`python3 /src/backup_script.py -dn testdb -du root -t PSQL -b -bd /src/backups/`
+PGPASSWORD=root
+DB_PASSWORD=root
+export PGPASSWORD
+export DB_PASSWORD
