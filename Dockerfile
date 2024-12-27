@@ -4,7 +4,7 @@ WORKDIR /src
 
 USER root
 RUN apt update -y \
-    && apt -y install mysql-client cron nano \
+    && apt -y install mysql-client postgresql-client cron nano \
     && apt install -y python3
 
 COPY src/* /src/

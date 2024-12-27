@@ -16,9 +16,9 @@ class Backup:
         self.type = type
         self.password = None
         self.hostname_mysql = os.environ.get("HOSTNAME_MYSQL", "192.168.1.62")
-        self.hostname_psql = os.environ.get("HOSTNAME_PSQL")
+        self.hostname_psql = os.environ.get("HOSTNAME_PSQL", "192.168.1.62")
         self.port_mysql = os.environ.get("PORT_MYSQL", "3306")
-        self.port_psql = os.environ.get("PORT_PSQL")
+        self.port_psql = os.environ.get("PORT_PSQL","5432")
 
     def set_password(self):
         """
@@ -63,9 +63,12 @@ class Backup:
             try:
                 cmd = [
                     'pg_dump',
-                    f'--dbname=postgresql://{self.database_user}:{self.password}@{self.hostname_psql}:{self.port_psql}/{self.database_name}',
-                    '-Fc',
-                    '-f', self.filename
+                    '-U', self.database_user,
+                    '-h', self.hostname_psql,
+                    '-p', str(self.port_psql),
+                    '-F', 'c',  
+                    '-f', self.filename,
+                    self.database_name
                 ]
 
                 result = subprocess.run(cmd, check=True)  # nosec
@@ -105,15 +108,15 @@ def main():
     parser.add_argument("-du", "--database_user", required=True, help="Enter the username of the database for the backup.")
     parser.add_argument("-b", "--backup", action="store_true", help="Backup the database.")
     parser.add_argument("-t", "--type", choices=["MYSQL", "PSQL"], required=True, help="MYSQL or PSQL")
-    parser.add_argument("-bd", "--backup_directory", required=True, help="Directory where backups will be stored.")
-    parser.add_argument("-r", "--retention", type=int, help="Retention period in days for old backups.")
+    parser.add_argument("-bd", "--backup_dir", default=".", help="Directory where backups are stored.")
+    parser.add_argument("-r", "--retention", type=int, help="Retention period in days for keeping backups.")
     args = parser.parse_args()
 
     db_name = args.database_name
     db_user = args.database_user
     backup = args.backup
     type = args.type
-    backup_directory = args.backup_directory
+    backup_dir = args.backup_dir
     retention = args.retention
 
     if backup:
@@ -121,23 +124,16 @@ def main():
         try:
             b.set_password()
             backup_file = b.create_backup(type=type)
-            if backup_file:
-                backup_path = os.path.join(backup_directory, backup_file)
-                os.rename(backup_file, backup_path)
-                print(f"Backup successful: {backup_path}")
-        except Exception as e:
-            logging.warning(e)
-
-    if args.retention is not None:
-        backup = Backup("", "", "")  # Placeholder values, not needed for deletion
-        try:
-            backup.delete_old_backups(args.backup_directory, args.retention)
         except Exception as e:
             logging.warning(e)
         else:
-            print(f"Old backups older than {args.retention} days deleted successfully.")
-        return
+            print(f"Backup successful: {backup_file}")
 
+    if retention:
+        try:
+            Backup.delete_old_backups(directory=backup_dir, retention_days=retention)
+        except Exception as e:
+            logging.warning(f"Failed to clean up old backups: {e}")
 
 
 if __name__ == '__main__':

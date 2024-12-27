@@ -12,3 +12,7 @@ in folder met Dockerfile
 4. `mkdir /src/backups`
 5. `echo "0 2 * * * DB_PASSWORD='root' python3 /src/backup_script.py -dn testdb -du root -t MYSQL -b -bd /src/backups >> /var/log/cron.log 2>&1" | crontab -`
 6. `tail -f /var/log/cron.log`
+
+
+
+`python3 script.py -dn testdb -du root -t PSQL -b -bd /home/user1/`
