@@ -1,0 +1,1 @@
+* * * * * DB_PASSWORD='root' python3 /src/backup_script.py -dn testdb -du root -t MYSQL -b >> /var/log/cron.log 2>&1
